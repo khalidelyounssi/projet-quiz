@@ -7,7 +7,7 @@ $msg = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user = $_POST['username'];
     $email = $_POST['email'];
-    $pass = password_hash($_POST['password'], PASSWORD_DEFAULT); // تشفير المودباس
+    $pass = password_hash($_POST['password'], PASSWORD_DEFAULT); 
     $role = $_POST['role'];
 
     $check = $pdo->prepare("SELECT id FROM users WHERE email = ?");

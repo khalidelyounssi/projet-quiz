@@ -1,5 +1,4 @@
 </main> </div> <script>
-    // Script simple pour le menu Burger
     const mobileMenu = document.getElementById('mobile-menu');
     const openBtn = document.getElementById('open-menu');
     const closeBtn = document.getElementById('close-menu');

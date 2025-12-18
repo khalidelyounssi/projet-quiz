@@ -6,12 +6,10 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'enseignant') { header("
 $quiz_id = $_GET['quiz_id'] ?? null;
 if (!$quiz_id) { header("Location: dashboard.php"); exit; }
 
-// جلب معلومات الكويز للرجوع
 $stmtQ = $pdo->prepare("SELECT * FROM quizzes WHERE id = ?");
 $stmtQ->execute([$quiz_id]);
 $quiz = $stmtQ->fetch();
 
-// إضافة سؤال
 if (isset($_POST['add_q'])) {
     $sql = "INSERT INTO questions (id_quiz, question_text, correct_option, option1, option2, option3) VALUES (?, ?, ?, ?, ?, ?)";
     $stmt = $pdo->prepare($sql);
@@ -19,14 +17,12 @@ if (isset($_POST['add_q'])) {
     header("Location: add_question.php?quiz_id=$quiz_id"); exit;
 }
 
-// حذف سؤال
 if (isset($_GET['del_q'])) {
     $stmt = $pdo->prepare("DELETE FROM questions WHERE id = ?");
     $stmt->execute([$_GET['del_q']]);
     header("Location: add_question.php?quiz_id=$quiz_id"); exit;
 }
 
-// جلب الأسئلة
 $stmtQs = $pdo->prepare("SELECT * FROM questions WHERE id_quiz = ? ORDER BY id DESC");
 $stmtQs->execute([$quiz_id]);
 $questions = $stmtQs->fetchAll();

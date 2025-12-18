@@ -1,49 +1,43 @@
 <?php
 require '../config/database.php';
 session_start();
+if(!isset($_SESSION['user_id'])) { header("Location: ../auth/login.php"); exit; }
 
-if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'enseignant') { header("Location: ../auth/login.php"); exit; }
+$cats = $pdo->prepare("SELECT * FROM categories WHERE id_enseignant=?");
+$cats->execute([$_SESSION['user_id']]);
+$categories = $cats->fetchAll();
 
-$id = $_GET['id'] ?? null;
-if (!$id) { header("Location: dashboard.php"); exit; }
+if(!$categories) {
+    echo "<script>alert('Veuillez créer une catégorie d\'abord !'); window.location='categories.php';</script>";
+    exit;
+}
 
-// نجيبو معلومات الكويز + الكاتيكوري باش نعرفو فين نرجعو
-$stmt = $pdo->prepare("SELECT * FROM quizzes WHERE id = ?");
-$stmt->execute([$id]);
-$quiz = $stmt->fetch();
-$cat_id = $quiz['id_category']; // مهم جداً للرجوع
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $stmt = $pdo->prepare("UPDATE quizzes SET title = ? WHERE id = ?");
-    $stmt->execute([$_POST['title'], $id]);
-    // نرجعو للصفحة د الكويزات د الكاتيكوري
-    header("Location: manage_quizzes.php?cat_id=$cat_id"); exit;
+if($_SERVER['REQUEST_METHOD']=='POST'){
+    $stmt = $pdo->prepare("INSERT INTO quizzes (title, id_category) VALUES (?, ?)");
+    $stmt->execute([$_POST['title'], $_POST['category_id']]);
+    $new_id = $pdo->lastInsertId();
+    header("Location: add_question.php?quiz_id=$new_id"); exit;
 }
 
 require '../includes/header.php';
 ?>
-
-<div class="max-w-xl mx-auto mt-10">
-    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-        <div class="bg-blue-600 p-6 text-white">
-            <h2 class="text-xl font-bold flex items-center gap-2">
-                <i class="fas fa-edit"></i> Modifier le Quiz
-            </h2>
+<div class="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-lg mt-10">
+    <h2 class="text-2xl font-bold mb-6 text-indigo-600">Créer un Quiz</h2>
+    <form method="POST">
+        <label class="block font-bold mb-2 text-gray-700">Titre</label>
+        <input type="text" name="title" required class="w-full border p-3 rounded-lg mb-4 bg-gray-50 focus:bg-white transition outline-none focus:ring-2 focus:ring-indigo-200">
+        
+        <label class="block font-bold mb-2 text-gray-700">Catégorie</label>
+        <select name="category_id" class="w-full border p-3 rounded-lg mb-6 bg-white outline-none focus:ring-2 focus:ring-indigo-200">
+            <?php foreach($categories as $c): ?>
+                <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['name']) ?></option>
+            <?php endforeach; ?>
+        </select>
+        
+        <div class="flex gap-4">
+            <a href="all_quizzes.php" class="flex-1 text-center py-3 rounded-lg border border-gray-200 text-gray-600">Annuler</a>
+            <button type="submit" class="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-bold hover:bg-indigo-700">Suivant</button>
         </div>
-        <div class="p-8">
-            <form method="POST">
-                <div class="mb-6">
-                    <label class="block text-gray-700 font-bold mb-2">Titre du Quiz</label>
-                    <input type="text" name="title" value="<?= htmlspecialchars($quiz['title']) ?>" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-                </div>
-                
-                <div class="flex gap-4">
-                    <a href="manage_quizzes.php?cat_id=<?= $cat_id ?>" class="flex-1 text-center py-3 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition">Annuler</a>
-                    <button type="submit" class="flex-1 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md transition">Enregistrer</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    </form>
 </div>
-
 <?php require '../includes/footer.php'; ?>
